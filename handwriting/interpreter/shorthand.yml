@@ -1,0 +1,29 @@
+# shorthand.yml — personal shorthand/symbol expansion dictionary
+#
+# Format:  "token": "expansion"
+# Keys are matched as plain substrings (longer keys first).
+# Add your own below.
+
+# Arrow / directional symbols
+"->": "to"
+"-->": "leads to"
+"↑": "increase"
+"↓": "decrease"
+"←": "from"
+"→": "to"
+
+# Common abbreviations (medical / note-taking examples — customise as needed)
+"pt": "patient"
+"f/u": "follow-up"
+"hx": "history"
+"dx": "diagnosis"
+"rx": "prescription"
+"sx": "symptoms"
+"w/": "with"
+"w/o": "without"
+"s/p": "status post"
+"b/c": "because"
+"@": "at"
+"&": "and"
+"#": "number"
+"%": "percent"
