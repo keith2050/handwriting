@@ -28,6 +28,8 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 
+from handwriting import normalize_path
+
 # ── path setup ────────────────────────────────────────────────────────────────
 ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "data"
@@ -67,7 +69,7 @@ def upsert_label(
     row: dict = {
         "page_id": page_id,
         "line_id": line_id,
-        "image_path": image_path.replace("\\", "/"),
+        "image_path": normalize_path(image_path),
         "literal": literal,
         "interpreted": interpreted,
     }

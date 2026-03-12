@@ -27,6 +27,7 @@ import cv2
 import numpy as np
 
 from . import normalize_path as _normalize_path
+from .preprocess import preprocess_page
 
 
 @dataclass
@@ -150,7 +151,7 @@ def segment_lines(
                 LineBox(
                     line_id=line_id,
                     bbox=(x0, y0, x1 - x0, y1 - y0),
-                    image_path=str(fpath).replace("\\", "/"),
+                    image_path=_normalize_path(str(fpath)),
                     is_margin=is_margin,
                 )
             )

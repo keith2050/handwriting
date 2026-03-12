@@ -117,10 +117,19 @@ class CRNN(nn.Module):
 def build_model(
     alphabet: List[str],
     img_height: int = 64,
+    cnn_channels: tuple = (32, 64, 128),
+    lstm_hidden: int = 256,
+    lstm_layers: int = 2,
     device: str | None = None,
 ) -> CRNN:
     """Instantiate a :class:`CRNN` and move it to *device*."""
     if device is None:
         device = "cuda" if torch.cuda.is_available() else "cpu"
-    model = CRNN(alphabet=alphabet, img_height=img_height)
+    model = CRNN(
+        alphabet=alphabet,
+        img_height=img_height,
+        cnn_channels=cnn_channels,
+        lstm_hidden=lstm_hidden,
+        lstm_layers=lstm_layers,
+    )
     return model.to(device)

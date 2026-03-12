@@ -175,3 +175,99 @@ pytest tests/ -v
 - **Size:** ~5 MB — fits GT 1030 VRAM
 
 Conservative defaults for GT 1030: `--batch_size 4 --accumulate 4`
+
+---
+
+## Hardware profiles
+
+The training script supports two built-in hardware profiles selected with
+`--profile`.  Any flag you pass explicitly overrides the profile value.
+
+### Comparison table
+
+| Setting | `--profile gt1030` (default) | `--profile rtx5060ti` |
+|---|---|---|
+| GPU | GT 1030 (~2 GB VRAM) | RTX 5060 Ti (~16 GB VRAM) |
+| CPU | i5-6500 (4 cores) | Ultra 9 285 (24 cores) |
+| `--img_height` | 64 | 96 |
+| `--max_width` | 1024 | 2048 |
+| `--cnn_channels` | 32,64,128 | 64,128,256 |
+| `--lstm_hidden` | 256 | 512 |
+| `--batch_size` | 4 | 32 |
+| `--accumulate` | 4 (eff. batch 16) | 1 |
+| `--num_workers` | 0 | 8 |
+| `--amp` | off | on (float16) |
+| Model parameters | ~2.8 M | ~21 M |
+| VRAM (fp32 / fp16) | ~0.4 GB / — | ~1.2 GB / ~0.6 GB |
+
+### What changes on the new hardware
+
+**RTX 5060 Ti (Blackwell, ~16 GB VRAM)**
+
+* **Larger model** — the bigger CNN (64→128→256 channels) and LSTM (hidden=512)
+  learns finer stroke details and longer context, which directly lowers CER on
+  your personal handwriting.
+* **Bigger batches** — `batch_size=32` with no gradient accumulation means
+  cleaner gradients and faster wall-clock convergence.
+* **Automatic mixed precision (AMP)** — `torch.cuda.amp` stores activations in
+  float16, roughly halving VRAM usage and doubling throughput on Tensor Cores.
+  Gradients are automatically scaled to avoid underflow.
+* **Larger line images** — `img_height=96` preserves more stroke detail for
+  fine-grained character recognition; `max_width=2048` handles long lines
+  without truncation.
+* No need for gradient accumulation (`--accumulate 1`).
+
+**Intel Core Ultra 9 285 (24 P+E cores)**
+
+* **More DataLoader workers** (`--num_workers 8`) — image loading, grayscale
+  conversion, and resizing run in 8 parallel processes, keeping the GPU
+  saturated between batches.  On the old i5-6500 (4 cores) `num_workers=0`
+  avoids overhead.
+* **Faster segmentation** — OpenCV's deskew, adaptive threshold, and contour
+  detection use SIMD/AVX instructions that are wider and faster on Arrow Lake.
+* **Faster Streamlit UI** — the Streamlit server process can schedule Python
+  threads across more cores.
+
+### RTX 5060 Ti training command
+
+```powershell
+python -m handwriting.ocr.train_ocr `
+    --labels  data/labels.csv `
+    --out     checkpoints/ `
+    --profile rtx5060ti `
+    --epochs  50
+```
+
+### GT 1030 training command (original)
+
+```powershell
+python -m handwriting.ocr.train_ocr `
+    --labels  data/labels.csv `
+    --out     checkpoints/ `
+    --profile gt1030 `
+    --epochs  30
+```
+
+### Mixing profiles and custom flags
+
+```powershell
+# RTX 5060 Ti but with a custom learning rate and 100 epochs
+python -m handwriting.ocr.train_ocr `
+    --labels  data/labels.csv `
+    --out     checkpoints/ `
+    --profile rtx5060ti `
+    --lr      3e-4 `
+    --epochs  100
+```
+
+### PyTorch with CUDA for RTX 5060 Ti (Blackwell)
+
+The RTX 5060 Ti requires CUDA 12.8+.  Install the matching PyTorch build:
+
+```powershell
+# Check CUDA version first
+nvidia-smi
+
+# Install PyTorch with CUDA 12.8
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cu128
+```

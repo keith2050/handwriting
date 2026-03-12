@@ -35,8 +35,15 @@ def _load_checkpoint(checkpoint_path: str) -> Tuple[CRNN, dict, str]:
 
     alphabet = ckpt["alphabet"]
     img_height = ckpt.get("img_height", 64)
+    cnn_channels = tuple(ckpt.get("cnn_channels", [32, 64, 128]))
+    lstm_hidden = ckpt.get("lstm_hidden", 256)
 
-    model = CRNN(alphabet=alphabet, img_height=img_height)
+    model = CRNN(
+        alphabet=alphabet,
+        img_height=img_height,
+        cnn_channels=cnn_channels,
+        lstm_hidden=lstm_hidden,
+    )
     model.load_state_dict(ckpt["model_state"])
     model.to(device)
     model.eval()
